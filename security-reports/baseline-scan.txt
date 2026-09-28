@@ -1,0 +1,155 @@
+
+
+## Overview
+
+                   │       Analyzed Image        
+───────────────────┼─────────────────────────────
+ Target            │  week10-app:baseline        
+   digest          │  2a971a5ae7b5               
+   platform        │ linux/amd64                 
+   vulnerabilities │    0C     8H     4M     1L  
+   size            │ 61 MB                       
+   packages        │ 212                         
+
+
+## Packages and Vulnerabilities
+
+   0C     3H     1M     0L  brace-expansion 2.0.2
+pkg:npm/brace-expansion@2.0.2
+
+    ✗ HIGH CVE-2026-13149 [Uncontrolled Resource Consumption]
+      https://scout.docker.com/v/CVE-2026-13149?s=github&n=brace-expansion&t=npm&vr=%3E%3D2.0.0%2C%3C2.1.2
+      Affected range : >=2.0.0                                                                                           
+                     : <2.1.2                                                                                            
+      Fixed version  : 2.1.2                                                                                             
+      CVSS Score     : 7.7                                                                                               
+      CVSS Vector    : CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N/E:P/S:N/AU:Y/R:U/V:D/RE:M/U:Amber 
+    
+    ✗ HIGH CVE-2026-69152 [Uncontrolled Resource Consumption]
+      https://scout.docker.com/v/CVE-2026-69152?s=github&n=brace-expansion&t=npm&vr=%3E%3D2.0.0%2C%3C2.1.4
+      Affected range : >=2.0.0                                      
+                     : <2.1.4                                       
+      Fixed version  : 2.1.4                                        
+      CVSS Score     : 7.5                                          
+      CVSS Vector    : CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H 
+    
+    ✗ HIGH CVE-2026-14257 [Uncontrolled Resource Consumption]
+      https://scout.docker.com/v/CVE-2026-14257?s=github&n=brace-expansion&t=npm&vr=%3E%3D2.0.0%2C%3C2.1.3
+      Affected range : >=2.0.0                                      
+                     : <2.1.3                                       
+      Fixed version  : 5.0.8                                        
+      CVSS Score     : 7.5                                          
+      CVSS Vector    : CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H 
+    
+    ✗ MEDIUM CVE-2026-33750 [Uncontrolled Resource Consumption]
+      https://scout.docker.com/v/CVE-2026-33750?s=github&n=brace-expansion&t=npm&vr=%3E%3D2.0.0%2C%3C2.0.3
+      Affected range : >=2.0.0                                      
+                     : <2.0.3                                       
+      Fixed version  : 5.0.5                                        
+      CVSS Score     : 6.5                                          
+      CVSS Vector    : CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H 
+    
+
+   0C     1H     1M     0L  ip-address 10.1.0
+pkg:npm/ip-address@10.1.0
+
+    ✗ HIGH CVE-2026-69192 [Improper Input Validation]
+      https://scout.docker.com/v/CVE-2026-69192?s=github&n=ip-address&t=npm&vr=%3C%3D10.3.0
+      Affected range : <=10.3.0                                                        
+      Fixed version  : 10.3.1                                                          
+      CVSS Score     : 7.7                                                             
+      CVSS Vector    : CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:L/VI:N/VA:N/SC:H/SI:N/SA:N 
+    
+    ✗ MEDIUM CVE-2026-42338 [Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')]
+      https://scout.docker.com/v/CVE-2026-42338?s=github&n=ip-address&t=npm&vr=%3C%3D10.1.0
+      Affected range : <=10.1.0                                                        
+      Fixed version  : 10.1.1                                                          
+      CVSS Score     : 5.3                                                             
+      CVSS Vector    : CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:P/VC:L/VI:L/VA:N/SC:N/SI:N/SA:N 
+    
+
+   0C     1H     1M     0L  picomatch 4.0.3
+pkg:npm/picomatch@4.0.3
+
+    ✗ HIGH CVE-2026-33671 [Inefficient Regular Expression Complexity]
+      https://scout.docker.com/v/CVE-2026-33671?s=github&n=picomatch&t=npm&vr=%3E%3D4.0.0%2C%3C4.0.4
+      Affected range : >=4.0.0                                      
+                     : <4.0.4                                       
+      Fixed version  : 4.0.4                                        
+      CVSS Score     : 7.5                                          
+      CVSS Vector    : CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H 
+    
+    ✗ MEDIUM CVE-2026-33672 [Improperly Controlled Modification of Object Prototype Attributes ('Prototype Pollution')]
+      https://scout.docker.com/v/CVE-2026-33672?s=github&n=picomatch&t=npm&vr=%3E%3D4.0.0%2C%3C4.0.4
+      Affected range : >=4.0.0                                      
+                     : <4.0.4                                       
+      Fixed version  : 4.0.4                                        
+      CVSS Score     : 5.3                                          
+      CVSS Vector    : CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N 
+    
+
+   0C     1H     0M     0L  pacote 20.0.1
+pkg:npm/pacote@20.0.1
+
+    ✗ HIGH CVE-2026-9496 [Inefficient Regular Expression Complexity]
+      https://scout.docker.com/v/CVE-2026-9496?s=github&n=pacote&t=npm&vr=%3E%3D11.2.7%2C%3C21.5.1
+      Affected range : >=11.2.7                                                            
+                     : <21.5.1                                                             
+      Fixed version  : 21.5.1                                                              
+      CVSS Score     : 7.7                                                                 
+      CVSS Vector    : CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N/E:P 
+    
+
+   0C     1H     0M     0L  sigstore 3.1.0
+pkg:npm/sigstore@3.1.0
+
+    ✗ HIGH CVE-2026-48815 [Improper Verification of Cryptographic Signature]
+      https://scout.docker.com/v/CVE-2026-48815?s=github&n=sigstore&t=npm&vr=%3C%3D4.1.0
+      Affected range : <=4.1.0                                      
+      Fixed version  : 4.1.1                                        
+      CVSS Score     : 7.5                                          
+      CVSS Vector    : CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N 
+    
+
+   0C     1H     0M     0L  pacote 19.0.2
+pkg:npm/pacote@19.0.2
+
+    ✗ HIGH CVE-2026-9496 [Inefficient Regular Expression Complexity]
+      https://scout.docker.com/v/CVE-2026-9496?s=github&n=pacote&t=npm&vr=%3E%3D11.2.7%2C%3C21.5.1
+      Affected range : >=11.2.7                                                            
+                     : <21.5.1                                                             
+      Fixed version  : 21.5.1                                                              
+      CVSS Score     : 7.7                                                                 
+      CVSS Vector    : CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N/E:P 
+    
+
+   0C     0H     1M     0L  @sigstore/core 2.0.0
+pkg:npm/%40sigstore/core@2.0.0
+
+    ✗ MEDIUM CVE-2026-48758 [Improper Verification of Cryptographic Signature]
+      https://scout.docker.com/v/CVE-2026-48758?s=github&n=core&ns=%40sigstore&t=npm&vr=%3C%3D3.2.0
+      Affected range : <=3.2.0                                      
+      Fixed version  : 3.2.1                                        
+      CVSS Score     : 5.4                                          
+      CVSS Vector    : CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:L 
+    
+
+   0C     0H     0M     1L  postcss-selector-parser 7.1.1
+pkg:npm/postcss-selector-parser@7.1.1
+
+    ✗ LOW CVE-2026-9358 [Improper Resource Shutdown or Release]
+      https://scout.docker.com/v/CVE-2026-9358?s=github&n=postcss-selector-parser&t=npm&vr=%3E%3D7.1.0%2C%3C7.1.3
+      Affected range : >=7.1.0                                                             
+                     : <7.1.3                                                              
+      Fixed version  : 7.1.3                                                               
+      CVSS Score     : 2.1                                                                 
+      CVSS Vector    : CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:P/VC:N/VI:N/VA:L/SC:N/SI:N/SA:N/E:P 
+    
+
+
+13 vulnerabilities found in 8 packages
+  CRITICAL  0 
+  HIGH      8 
+  MEDIUM    4 
+  LOW       1 
+
