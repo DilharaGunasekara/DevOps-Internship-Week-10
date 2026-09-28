@@ -1,0 +1,10 @@
+{
+  "name": "jenkins-ci-app",
+  "version": "1.0.0",
+  "description": "Week 05 Jenkins CI/CD Demo",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "node test.js"
+  }
+}
