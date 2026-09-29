@@ -95,29 +95,19 @@ pipeline {
             }
         }
 
-        stage('Docker Login Diagnostic') {
-            steps {
-                echo 'Testing Docker Hub login through Jenkins CMD...'
+        stage('Jenkins Docker Environment Diagnostic') {
+    steps {
+        echo 'Checking Docker environment used by Jenkins...'
 
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-credentials',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_TOKEN'
-                )]) {
-                    bat '''
-                        @echo off
-                        echo %DOCKER_TOKEN% | docker login -u %DOCKER_USER% --password-stdin
-
-                        if errorlevel 1 (
-                            echo Docker login diagnostic FAILED.
-                            exit /b 1
-                        )
-
-                        echo Docker login diagnostic SUCCEEDED.
-                    '''
-                }
-            }
-        }
+        bat '''@echo off
+whoami
+echo USERPROFILE=%USERPROFILE%
+echo HOME=%HOME%
+echo DOCKER_CONFIG=%DOCKER_CONFIG%
+docker context show
+docker info --format "{{.Name}}"'''
+    }
+}
 
         stage('Security Scan') {
             steps {
