@@ -59,6 +59,36 @@ pipeline {
             }
         }
 
+        stage('Verify Docker Credentials') {
+            steps {
+                echo 'Verifying Jenkins Docker Hub credential binding...'
+
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_TOKEN'
+                )]) {
+                    powershell '''
+                        Write-Host "Docker username from Jenkins: $env:DOCKER_USER"
+
+                        if ([string]::IsNullOrWhiteSpace($env:DOCKER_USER)) {
+                            Write-Error "DOCKER_USER is empty."
+                            exit 1
+                        }
+
+                        if ([string]::IsNullOrWhiteSpace($env:DOCKER_TOKEN)) {
+                            Write-Error "DOCKER_TOKEN is empty."
+                            exit 1
+                        }
+
+                        Write-Host "Docker token loaded by Jenkins."
+                        Write-Host "Token length: $($env:DOCKER_TOKEN.Length)"
+                        Write-Host "Jenkins credential binding verification passed."
+                    '''
+                }
+            }
+        }
+
         stage('Security Scan') {
             steps {
                 echo 'Authenticating Docker Scout and scanning the hardened image...'
@@ -68,7 +98,6 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
-
                     powershell '''
                         $env:DOCKER_TOKEN | docker login -u $env:DOCKER_USER --password-stdin
 
@@ -77,6 +106,8 @@ pipeline {
                             exit 1
                         }
 
+                        Write-Host "Docker Hub authentication succeeded."
+
                         New-Item -ItemType Directory -Force -Path "security-reports" | Out-Null
 
                         docker scout cves "$env:APP_NAME`:$env:APP_VERSION" |
@@ -84,6 +115,7 @@ pipeline {
 
                         if ($LASTEXITCODE -ne 0) {
                             Write-Error "Docker Scout scan failed."
+                            docker logout
                             exit 1
                         }
 
@@ -94,8 +126,11 @@ pipeline {
 
                         if ($LASTEXITCODE -ne 0) {
                             Write-Error "Critical vulnerability security gate failed."
+                            docker logout
                             exit 1
                         }
+
+                        Write-Host "Critical vulnerability security gate passed."
 
                         docker logout
                     '''
@@ -110,8 +145,6 @@ pipeline {
             }
         }
 
-                  
-
         stage('Push to Docker Hub') {
             steps {
                 echo 'Security gate passed. Pushing hardened image to Docker Hub...'
@@ -121,21 +154,33 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
+                    powershell '''
+                        $env:DOCKER_TOKEN | docker login -u $env:DOCKER_USER --password-stdin
 
-                    bat '''
-                        @echo off
+                        if ($LASTEXITCODE -ne 0) {
+                            Write-Error "Docker Hub authentication failed before push."
+                            exit 1
+                        }
 
-                        echo %DOCKER_TOKEN% | docker login -u %DOCKER_USER% --password-stdin
-                        if errorlevel 1 exit /b 1
+                        docker tag "$env:APP_NAME`:$env:APP_VERSION" "$env:DOCKER_IMAGE"
 
-                        docker tag %APP_NAME%:%APP_VERSION% %DOCKER_IMAGE%
-                        if errorlevel 1 exit /b 1
+                        if ($LASTEXITCODE -ne 0) {
+                            Write-Error "Docker image tagging failed."
+                            docker logout
+                            exit 1
+                        }
 
-                        docker push %DOCKER_IMAGE%
-                        if errorlevel 1 exit /b 1
+                        docker push "$env:DOCKER_IMAGE"
+
+                        if ($LASTEXITCODE -ne 0) {
+                            Write-Error "Docker image push failed."
+                            docker logout
+                            exit 1
+                        }
+
+                        Write-Host "Docker image pushed successfully."
 
                         docker logout
-                        if errorlevel 1 exit /b 1
                     '''
                 }
             }
@@ -148,7 +193,7 @@ pipeline {
         }
 
         failure {
-            echo 'Week 10 DevSecOps pipeline failed. Review the test, security scan, authentication, or push results.'
+            echo 'Week 10 DevSecOps pipeline failed. Review the stage that failed.'
         }
 
         always {
@@ -156,5 +201,3 @@ pipeline {
         }
     }
 }
-    
-
