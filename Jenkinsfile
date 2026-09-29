@@ -18,36 +18,39 @@ pipeline {
         stage('Build Verification') {
             steps {
                 echo 'Verifying Week 10 build environment...'
-                sh 'node --version'
-                sh 'npm --version'
+                bat 'node --version'
+                bat 'npm --version'
+                bat 'docker --version'
             }
         }
 
         stage('Automated Tests') {
             steps {
                 echo 'Running automated tests...'
-                sh 'npm test'
+                bat 'npm test'
             }
         }
 
         stage('Build Hardened Docker Image') {
             steps {
                 echo 'Building hardened Docker image...'
-                sh 'docker build -t ${APP_NAME}:${APP_VERSION} .'
+                bat 'docker build -t %APP_NAME%:%APP_VERSION% .'
             }
         }
 
         stage('Verify Container Security') {
             steps {
                 echo 'Verifying container runs as a non-root user...'
-                sh '''
-                    USER_NAME=$(docker inspect ${APP_NAME}:${APP_VERSION} --format '{{.Config.User}}')
-                    echo "Configured container user: $USER_NAME"
+                powershell '''
+                    $userName = docker inspect "$env:APP_NAME`:$env:APP_VERSION" --format '{{.Config.User}}'
+                    Write-Host "Configured container user: $userName"
 
-                    if [ "$USER_NAME" = "root" ] || [ -z "$USER_NAME" ]; then
-                        echo "Security check failed: container is configured to run as root."
+                    if ([string]::IsNullOrWhiteSpace($userName) -or $userName -eq "root") {
+                        Write-Error "Security check failed: container is configured to run as root."
                         exit 1
-                    fi
+                    }
+
+                    Write-Host "Non-root container security check passed."
                 '''
             }
         }
@@ -55,19 +58,18 @@ pipeline {
         stage('Security Scan') {
             steps {
                 echo 'Scanning Docker image with Docker Scout...'
-                sh '''
-                    mkdir -p security-reports
-                    docker scout cves ${APP_NAME}:${APP_VERSION} \
-                        > security-reports/jenkins-security-scan.txt
 
-                    cat security-reports/jenkins-security-scan.txt
+                bat '''
+                    if not exist security-reports mkdir security-reports
 
-                    docker scout cves ${APP_NAME}:${APP_VERSION} \
-                        --only-severity critical \
-                        --exit-code \
-                        > security-reports/critical-scan.txt
+                    docker scout cves %APP_NAME%:%APP_VERSION% > security-reports\\jenkins-security-scan.txt
+
+                    type security-reports\\jenkins-security-scan.txt
+
+                    docker scout cves %APP_NAME%:%APP_VERSION% --only-severity critical --exit-code > security-reports\\critical-scan.txt
                 '''
             }
+
             post {
                 always {
                     archiveArtifacts artifacts: 'security-reports/*.txt',
@@ -85,12 +87,11 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
-                    sh '''
-                        echo "$DOCKER_TOKEN" | docker login \
-                            -u "$DOCKER_USER" --password-stdin
+                    bat '''
+                        echo %DOCKER_TOKEN% | docker login -u %DOCKER_USER% --password-stdin
 
-                        docker tag ${APP_NAME}:${APP_VERSION} ${DOCKER_IMAGE}
-                        docker push ${DOCKER_IMAGE}
+                        docker tag %APP_NAME%:%APP_VERSION% %DOCKER_IMAGE%
+                        docker push %DOCKER_IMAGE%
                         docker logout
                     '''
                 }
