@@ -9,6 +9,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -67,18 +68,25 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
+
                     bat '''
+                        @echo off
+
                         echo %DOCKER_TOKEN% | docker login -u %DOCKER_USER% --password-stdin
+                        if errorlevel 1 exit /b 1
 
                         if not exist security-reports mkdir security-reports
 
                         docker scout cves %APP_NAME%:%APP_VERSION% > security-reports\\jenkins-security-scan.txt
+                        if errorlevel 1 exit /b 1
 
                         type security-reports\\jenkins-security-scan.txt
 
                         docker scout cves %APP_NAME%:%APP_VERSION% --only-severity critical --exit-code > security-reports\\critical-scan.txt
+                        if errorlevel 1 exit /b 1
 
                         docker logout
+                        if errorlevel 1 exit /b 1
                     '''
                 }
             }
@@ -100,13 +108,21 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
+
                     bat '''
+                        @echo off
+
                         echo %DOCKER_TOKEN% | docker login -u %DOCKER_USER% --password-stdin
+                        if errorlevel 1 exit /b 1
 
                         docker tag %APP_NAME%:%APP_VERSION% %DOCKER_IMAGE%
+                        if errorlevel 1 exit /b 1
+
                         docker push %DOCKER_IMAGE%
+                        if errorlevel 1 exit /b 1
 
                         docker logout
+                        if errorlevel 1 exit /b 1
                     '''
                 }
             }
@@ -119,7 +135,7 @@ pipeline {
         }
 
         failure {
-            echo 'Week 10 DevSecOps pipeline failed. Review the test or security findings.'
+            echo 'Week 10 DevSecOps pipeline failed. Review the test, security scan, authentication, or push results.'
         }
 
         always {
@@ -127,3 +143,5 @@ pipeline {
         }
     }
 }
+    
+
