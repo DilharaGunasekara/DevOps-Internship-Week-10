@@ -69,24 +69,35 @@ pipeline {
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
 
-                    bat '''
-                        @echo off
+                    powershell '''
+                        $env:DOCKER_TOKEN | docker login -u $env:DOCKER_USER --password-stdin
 
-                        echo %DOCKER_TOKEN% | docker login -u %DOCKER_USER% --password-stdin
-                        if errorlevel 1 exit /b 1
+                        if ($LASTEXITCODE -ne 0) {
+                            Write-Error "Docker Hub authentication failed."
+                            exit 1
+                        }
 
-                        if not exist security-reports mkdir security-reports
+                        New-Item -ItemType Directory -Force -Path "security-reports" | Out-Null
 
-                        docker scout cves %APP_NAME%:%APP_VERSION% > security-reports\\jenkins-security-scan.txt
-                        if errorlevel 1 exit /b 1
+                        docker scout cves "$env:APP_NAME`:$env:APP_VERSION" |
+                            Out-File -FilePath "security-reports\\jenkins-security-scan.txt" -Encoding utf8
 
-                        type security-reports\\jenkins-security-scan.txt
+                        if ($LASTEXITCODE -ne 0) {
+                            Write-Error "Docker Scout scan failed."
+                            exit 1
+                        }
 
-                        docker scout cves %APP_NAME%:%APP_VERSION% --only-severity critical --exit-code > security-reports\\critical-scan.txt
-                        if errorlevel 1 exit /b 1
+                        Get-Content "security-reports\\jenkins-security-scan.txt"
+
+                        docker scout cves "$env:APP_NAME`:$env:APP_VERSION" --only-severity critical --exit-code |
+                            Out-File -FilePath "security-reports\\critical-scan.txt" -Encoding utf8
+
+                        if ($LASTEXITCODE -ne 0) {
+                            Write-Error "Critical vulnerability security gate failed."
+                            exit 1
+                        }
 
                         docker logout
-                        if errorlevel 1 exit /b 1
                     '''
                 }
             }
@@ -98,6 +109,8 @@ pipeline {
                 }
             }
         }
+
+                  
 
         stage('Push to Docker Hub') {
             steps {
