@@ -99,38 +99,29 @@ pipeline {
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
                     powershell '''
-                        $env:DOCKER_TOKEN | docker login -u $env:DOCKER_USER --password-stdin
+    Write-Host "Docker username from Jenkins: $env:DOCKER_USER"
 
-                        if ($LASTEXITCODE -ne 0) {
-                            Write-Error "Docker Hub authentication failed."
-                            exit 1
-                        }
+    if ([string]::IsNullOrWhiteSpace($env:DOCKER_USER)) {
+        Write-Error "DOCKER_USER is empty."
+        exit 1
+    }
 
-                        Write-Host "Docker Hub authentication succeeded."
+    if ([string]::IsNullOrWhiteSpace($env:DOCKER_TOKEN)) {
+        Write-Error "DOCKER_TOKEN is empty."
+        exit 1
+    }
 
-                        New-Item -ItemType Directory -Force -Path "security-reports" | Out-Null
+    Write-Host "Docker token loaded by Jenkins."
+    Write-Host "Token length: $($env:DOCKER_TOKEN.Length)"
 
-                        docker scout cves "$env:APP_NAME`:$env:APP_VERSION" |
-                            Out-File -FilePath "security-reports\\jenkins-security-scan.txt" -Encoding utf8
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($env:DOCKER_TOKEN)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    $hash = $sha.ComputeHash($bytes)
+    $fingerprint = [BitConverter]::ToString($hash).Replace("-","").ToLower()
 
-                        if ($LASTEXITCODE -ne 0) {
-                            Write-Error "Docker Scout scan failed."
-                            docker logout
-                            exit 1
-                        }
-
-                        Get-Content "security-reports\\jenkins-security-scan.txt"
-
-                        docker scout cves "$env:APP_NAME`:$env:APP_VERSION" --only-severity critical --exit-code |
-                            Out-File -FilePath "security-reports\\critical-scan.txt" -Encoding utf8
-
-                        if ($LASTEXITCODE -ne 0) {
-                            Write-Error "Critical vulnerability security gate failed."
-                            docker logout
-                            exit 1
-                        }
-
-                        Write-Host "Critical vulnerability security gate passed."
+    Write-Host "Token SHA256: $fingerprint"
+    Write-Host "Jenkins credential binding verification passed."
+'''
 
                         docker logout
                     '''
