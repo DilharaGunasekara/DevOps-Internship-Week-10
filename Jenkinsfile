@@ -68,7 +68,6 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
-
                     powershell '''
                         Write-Host "Docker username from Jenkins: $env:DOCKER_USER"
 
@@ -86,16 +85,35 @@ pipeline {
                         Write-Host "Token length: $($env:DOCKER_TOKEN.Length)"
 
                         $bytes = [System.Text.Encoding]::UTF8.GetBytes($env:DOCKER_TOKEN)
+                        $hash = [System.Security.Cryptography.SHA256]::Create().ComputeHash($bytes)
+                        $hashString = [BitConverter]::ToString($hash).Replace("-","").ToLower()
 
-                        $sha = [System.Security.Cryptography.SHA256]::Create()
-
-                        $hash = $sha.ComputeHash($bytes)
-
-                        $fingerprint = [BitConverter]::ToString($hash).Replace("-","").ToLower()
-
-                        Write-Host "Token SHA256: $fingerprint"
-
+                        Write-Host "Token SHA256: $hashString"
                         Write-Host "Jenkins credential binding verification passed."
+                    '''
+                }
+            }
+        }
+
+        stage('Docker Login Diagnostic') {
+            steps {
+                echo 'Testing Docker Hub login through Jenkins CMD...'
+
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_TOKEN'
+                )]) {
+                    bat '''
+                        @echo off
+                        echo %DOCKER_TOKEN% | docker login -u %DOCKER_USER% --password-stdin
+
+                        if errorlevel 1 (
+                            echo Docker login diagnostic FAILED.
+                            exit /b 1
+                        )
+
+                        echo Docker login diagnostic SUCCEEDED.
                     '''
                 }
             }
@@ -103,51 +121,31 @@ pipeline {
 
         stage('Security Scan') {
             steps {
-                echo 'Authenticating Docker Scout and scanning the hardened image...'
+                echo 'Running Docker Scout security scan...'
 
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-credentials',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_TOKEN'
-                )]) {
+                bat '''
+                    @echo off
 
-                    powershell '''
-                        $env:DOCKER_TOKEN | docker login -u $env:DOCKER_USER --password-stdin
+                    if not exist security-reports mkdir security-reports
 
-                        if ($LASTEXITCODE -ne 0) {
-                            Write-Error "Docker Hub authentication failed."
-                            exit 1
-                        }
+                    docker scout cves %APP_NAME%:%APP_VERSION% > security-reports\\jenkins-security-scan.txt
 
-                        Write-Host "Docker Hub authentication succeeded."
+                    if errorlevel 1 (
+                        echo Docker Scout scan failed.
+                        exit /b 1
+                    )
 
-                        New-Item -ItemType Directory -Force -Path "security-reports" | Out-Null
+                    type security-reports\\jenkins-security-scan.txt
 
-                        docker scout cves "$env:APP_NAME`:$env:APP_VERSION" |
-                            Out-File -FilePath "security-reports\\jenkins-security-scan.txt" -Encoding utf8
+                    docker scout cves %APP_NAME%:%APP_VERSION% --only-severity critical --exit-code > security-reports\\critical-scan.txt
 
-                        if ($LASTEXITCODE -ne 0) {
-                            Write-Error "Docker Scout scan failed."
-                            docker logout
-                            exit 1
-                        }
+                    if errorlevel 1 (
+                        echo Critical vulnerability security gate failed.
+                        exit /b 1
+                    )
 
-                        Get-Content "security-reports\\jenkins-security-scan.txt"
-
-                        docker scout cves "$env:APP_NAME`:$env:APP_VERSION" --only-severity critical --exit-code |
-                            Out-File -FilePath "security-reports\\critical-scan.txt" -Encoding utf8
-
-                        if ($LASTEXITCODE -ne 0) {
-                            Write-Error "Critical vulnerability security gate failed."
-                            docker logout
-                            exit 1
-                        }
-
-                        Write-Host "Critical vulnerability security gate passed."
-
-                        docker logout
-                    '''
-                }
+                    echo Critical vulnerability security gate passed.
+                '''
             }
 
             post {
@@ -162,41 +160,27 @@ pipeline {
             steps {
                 echo 'Security gate passed. Pushing hardened image to Docker Hub...'
 
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-credentials',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_TOKEN'
-                )]) {
+                bat '''
+                    @echo off
 
-                    powershell '''
-                        $env:DOCKER_TOKEN | docker login -u $env:DOCKER_USER --password-stdin
+                    docker tag %APP_NAME%:%APP_VERSION% %DOCKER_IMAGE%
 
-                        if ($LASTEXITCODE -ne 0) {
-                            Write-Error "Docker Hub authentication failed before push."
-                            exit 1
-                        }
+                    if errorlevel 1 (
+                        echo Docker image tagging failed.
+                        exit /b 1
+                    )
 
-                        docker tag "$env:APP_NAME`:$env:APP_VERSION" "$env:DOCKER_IMAGE"
+                    docker push %DOCKER_IMAGE%
 
-                        if ($LASTEXITCODE -ne 0) {
-                            Write-Error "Docker image tagging failed."
-                            docker logout
-                            exit 1
-                        }
+                    if errorlevel 1 (
+                        echo Docker image push failed.
+                        exit /b 1
+                    )
 
-                        docker push "$env:DOCKER_IMAGE"
+                    echo Docker image pushed successfully.
 
-                        if ($LASTEXITCODE -ne 0) {
-                            Write-Error "Docker image push failed."
-                            docker logout
-                            exit 1
-                        }
-
-                        Write-Host "Docker image pushed successfully."
-
-                        docker logout
-                    '''
-                }
+                    docker logout
+                '''
             }
         }
     }
